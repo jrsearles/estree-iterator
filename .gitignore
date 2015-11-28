@@ -1,0 +1,6 @@
+node_modules
+typings
+jsconfig.json
+.settings
+.vscode
+npm-debug.log
