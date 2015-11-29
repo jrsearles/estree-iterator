@@ -1,4 +1,4 @@
-const keys = {};
+export const keys = {};
 keys.ArrayExpression = ["elements"];
 keys.AssignmentExpression = ["right", "left"];
 keys.BinaryExpression = keys.LogicalExpression = ["left", "right"];
@@ -28,5 +28,3 @@ keys.WithStatement = ["object", "body"];
 
 // ignore
 keys.DebuggerStatement = keys.EmptyStatement = keys.Identifier = keys.Literal = keys.ThisExpression = [];
-
-export default keys;

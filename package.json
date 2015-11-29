@@ -1,11 +1,15 @@
 {
   "name": "estree-iterator",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Iterator for ESTree nodes",
-  "main": "dist/estree-iterator.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "mocha --compilers js:babel-core/register",
-    "prepublish": "browserify src/index.js -t babelify -o dist/estree-iterator.js"
+    "prepublish": "babel src --out-dir dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jrsearles/estree-iterator.git"
   },
   "keywords": [
     "javascript",
@@ -15,11 +19,10 @@
   "license": "MIT",
   "devDependencies": {
     "acorn": "^2.6.4",
+    "babel": "^6.1.18",
     "babel-core": "^6.2.1",
     "babel-polyfill": "^6.2.0",
     "babel-preset-es2015": "^6.1.18",
-    "babelify": "^7.2.0",
-    "browserify": "^12.0.1",
     "chai": "^3.4.1",
     "eslint": "^1.10.2",
     "mocha": "^2.3.4"

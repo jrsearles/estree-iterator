@@ -1,4 +1,4 @@
-import EstreeIterator from "../src/index.js";
+import {EstreeIterator} from "../index";
 import * as acorn from "acorn";
 import {expect} from "chai";
 
