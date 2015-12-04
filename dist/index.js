@@ -7,18 +7,42 @@ exports.walk = walk;
 exports.iterate = iterate;
 exports.filter = filter;
 
+var _create = require("babel-runtime/core-js/object/create");
+
+var _create2 = _interopRequireDefault(_create);
+
+var _getIterator2 = require("babel-runtime/core-js/get-iterator");
+
+var _getIterator3 = _interopRequireDefault(_getIterator2);
+
+var _keys = require("babel-runtime/core-js/object/keys");
+
+var _keys2 = _interopRequireDefault(_keys);
+
+var _assign = require("babel-runtime/core-js/object/assign");
+
+var _assign2 = _interopRequireDefault(_assign);
+
+var _regenerator = require("babel-runtime/regenerator");
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
+require("babel-runtime");
+
 var _traversalContext = require("./traversal-context");
 
 var _walk = require("./walk");
 
 var _visitors = require("./visitors");
 
-var _marked = [iterate, filter].map(regeneratorRuntime.mark);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _marked = [iterate, filter].map(_regeneratorRuntime.mark);
 
 function makeVisitor(keys) {
-	return regeneratorRuntime.mark(function visitor(node, state, w) {
+	return _regenerator2.default.mark(function visitor(node, state, w) {
 		var i, ln, key;
-		return regeneratorRuntime.wrap(function visitor$(_context) {
+		return _regenerator2.default.wrap(function visitor$(_context) {
 			while (1) {
 				switch (_context.prev = _context.next) {
 					case 0:
@@ -58,9 +82,9 @@ function makeVisitor(keys) {
 }
 
 function wrapVisitors(visitors, baseVisitors) {
-	var wrappedVisitors = Object.assign({}, baseVisitors);
+	var wrappedVisitors = (0, _assign2.default)({}, baseVisitors);
 
-	Object.keys(visitors).forEach(function (key) {
+	(0, _keys2.default)(visitors).forEach(function (key) {
 		if (visitors[key] === false) {
 			wrappedVisitors[key] = false;
 			return;
@@ -73,10 +97,10 @@ function wrapVisitors(visitors, baseVisitors) {
 
 		var baseVisitor = baseVisitors[key];
 
-		wrappedVisitors[key] = regeneratorRuntime.mark(function _callee() {
+		wrappedVisitors[key] = _regenerator2.default.mark(function _callee() {
 			var result,
 			    _args2 = arguments;
-			return regeneratorRuntime.wrap(function _callee$(_context2) {
+			return _regenerator2.default.wrap(function _callee$(_context2) {
 				while (1) {
 					switch (_context2.prev = _context2.next) {
 						case 0:
@@ -129,7 +153,7 @@ function iterate(node) {
 				_didIteratorError = false;
 				_iteratorError = undefined;
 				_context3.prev = 3;
-				_iterator = (0, _walk.walk)(_visitors.defaultVisitors, new _traversalContext.TraversalContext(node))[Symbol.iterator]();
+				_iterator = (0, _getIterator3.default)((0, _walk.walk)(_visitors.defaultVisitors, new _traversalContext.TraversalContext(node)));
 
 			case 5:
 				if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
@@ -196,7 +220,7 @@ function filter(node, filters) {
 				hash = undefined;
 
 				if (filters && Array.isArray(filters)) {
-					hash = Object.create(null);
+					hash = (0, _create2.default)(null);
 					filters.forEach(function (type) {
 						return hash[type] = true;
 					});
@@ -206,7 +230,7 @@ function filter(node, filters) {
 				_didIteratorError2 = false;
 				_iteratorError2 = undefined;
 				_context4.prev = 5;
-				_iterator2 = (0, _walk.walk)(_visitors.defaultVisitors, new _traversalContext.TraversalContext(node))[Symbol.iterator]();
+				_iterator2 = (0, _getIterator3.default)((0, _walk.walk)(_visitors.defaultVisitors, new _traversalContext.TraversalContext(node)));
 
 			case 7:
 				if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {

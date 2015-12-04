@@ -7,14 +7,28 @@ exports.defaultVisitors = undefined;
 exports.defaultVisitor = defaultVisitor;
 exports.extendVisitors = extendVisitors;
 
+var _assign = require("babel-runtime/core-js/object/assign");
+
+var _assign2 = _interopRequireDefault(_assign);
+
+var _keys = require("babel-runtime/core-js/object/keys");
+
+var _keys2 = _interopRequireDefault(_keys);
+
+var _regenerator = require("babel-runtime/regenerator");
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
 var _types = require("./types");
 
-var _marked = [defaultVisitor].map(regeneratorRuntime.mark);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _marked = [defaultVisitor].map(_regeneratorRuntime.mark);
 
 function makeVisitor(keys) {
-	return regeneratorRuntime.mark(function visitor(node, state, w) {
+	return _regenerator2.default.mark(function visitor(node, state, w) {
 		var i, ln, key;
-		return regeneratorRuntime.wrap(function visitor$(_context) {
+		return _regenerator2.default.wrap(function visitor$(_context) {
 			while (1) {
 				switch (_context.prev = _context.next) {
 					case 0:
@@ -98,14 +112,14 @@ function defaultVisitor(node, state, w) {
 }
 
 var defaultVisitors = exports.defaultVisitors = {};
-Object.keys(_types.types).forEach(function (key) {
+(0, _keys2.default)(_types.types).forEach(function (key) {
 	return defaultVisitors[key] = makeVisitor(_types.types[key]);
 });
 
 function extendVisitors(visitors, baseVisitors) {
-	var wrappedVisitors = Object.assign({}, baseVisitors || defaultVisitors);
+	var wrappedVisitors = (0, _assign2.default)({}, baseVisitors || defaultVisitors);
 
-	Object.keys(visitors).forEach(function (key) {
+	(0, _keys2.default)(visitors).forEach(function (key) {
 		if (visitors[key] === false) {
 			wrappedVisitors[key] = false;
 			return;
@@ -118,10 +132,10 @@ function extendVisitors(visitors, baseVisitors) {
 
 		var baseVisitor = baseVisitors[key];
 
-		wrappedVisitors[key] = regeneratorRuntime.mark(function _callee() {
+		wrappedVisitors[key] = _regenerator2.default.mark(function _callee() {
 			var result,
 			    _args3 = arguments;
-			return regeneratorRuntime.wrap(function _callee$(_context3) {
+			return _regenerator2.default.wrap(function _callee$(_context3) {
 				while (1) {
 					switch (_context3.prev = _context3.next) {
 						case 0:

@@ -1,11 +1,25 @@
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.TraversalContext = undefined;
+
+var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+var _createClass2 = require("babel-runtime/helpers/createClass");
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
+var _keys = require("babel-runtime/core-js/object/keys");
+
+var _keys2 = _interopRequireDefault(_keys);
+
+var _typeof2 = require("babel-runtime/helpers/typeof");
+
+var _typeof3 = _interopRequireDefault(_typeof2);
 
 var _types = require("./types");
 
@@ -13,12 +27,10 @@ var _interfaces = require("./interfaces");
 
 var _binding = require("./binding");
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function isNode(obj) {
-	return obj && (typeof obj === "undefined" ? "undefined" : _typeof(obj)) === "object" && typeof obj.type === "string";
+	return obj && (typeof obj === "undefined" ? "undefined" : (0, _typeof3.default)(obj)) === "object" && typeof obj.type === "string";
 }
 
 function assignChild(value, context) {
@@ -79,11 +91,11 @@ initers["VariableDeclarator"] = {
 	}
 };
 
-var initKeys = Object.keys(initers);
+var initKeys = (0, _keys2.default)(initers);
 
 var TraversalContext = exports.TraversalContext = (function () {
 	function TraversalContext(node, parent) {
-		_classCallCheck(this, TraversalContext);
+		(0, _classCallCheck3.default)(this, TraversalContext);
 
 		this._node = node;
 		this._parent = parent;
@@ -92,7 +104,7 @@ var TraversalContext = exports.TraversalContext = (function () {
 		this.init();
 	}
 
-	_createClass(TraversalContext, [{
+	(0, _createClass3.default)(TraversalContext, [{
 		key: "init",
 		value: function init() {
 			var _this = this;
@@ -115,7 +127,7 @@ var TraversalContext = exports.TraversalContext = (function () {
 				}
 			});
 
-			Object.keys(this._node).forEach(function (key) {
+			(0, _keys2.default)(this._node).forEach(function (key) {
 				return _this[key] = assignChild(_this._node[key], _this);
 			});
 
@@ -152,20 +164,19 @@ var TraversalContext = exports.TraversalContext = (function () {
 			return this.bindings && this.bindings.length > 0;
 		}
 	}]);
-
 	return TraversalContext;
 })();
 
 ;
 
 // add helper methods
-Object.keys(_interfaces.interfaces).forEach(function (key) {
+(0, _keys2.default)(_interfaces.interfaces).forEach(function (key) {
 	TraversalContext.prototype["is" + key] = typeof _interfaces.interfaces[key] === "function" ? _interfaces.interfaces[key] : function () {
 		return _interfaces.interfaces[key].indexOf(this.type) >= 0;
 	};
 });
 
-Object.keys(_types.types).forEach(function (key) {
+(0, _keys2.default)(_types.types).forEach(function (key) {
 	TraversalContext.prototype["is" + key] = function () {
 		return this.type === key;
 	};

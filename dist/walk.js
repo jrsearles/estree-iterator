@@ -5,9 +5,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.walk = walk;
 
+var _regenerator = require("babel-runtime/regenerator");
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
 var _visitors = require("./visitors");
 
-var _marked = [walk].map(regeneratorRuntime.mark);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _marked = [walk].map(_regenerator2.default.mark);
 
 function walk(visitors, node, state, w) {
 	var i, ln, visitor;
