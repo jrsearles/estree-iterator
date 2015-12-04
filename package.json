@@ -1,6 +1,6 @@
 {
   "name": "estree-iterator",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Iterator for ESTree nodes",
   "main": "dist/index.js",
   "scripts": {

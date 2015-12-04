@@ -1,4 +1,3 @@
-import "babel-runtime";
 import {TraversalContext} from "./traversal-context";
 import {walk as walker} from "./walk";
 import {defaultVisitors} from "./visitors";

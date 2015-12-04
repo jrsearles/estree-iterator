@@ -27,8 +27,6 @@ var _regenerator = require("babel-runtime/regenerator");
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
 
-require("babel-runtime");
-
 var _traversalContext = require("./traversal-context");
 
 var _walk = require("./walk");
