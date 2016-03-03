@@ -1,11 +1,38 @@
 import * as iterator from "../index";
 import * as acorn from "acorn";
 import {expect} from "chai";
+import {TraversalContext} from "../src/traversal-context";
 
 describe("API", () => {
 	it("should have filter method", () => {
 		expect(typeof iterator.filter).to.equal("function");
 		
+	});	
+});
+
+let node = {
+	type: "Program",
+	body: [{
+		type: "BlockStatement",
+		body: [{
+			type: "VariableDeclaration",
+			kind: "let",
+			declarations: [{
+				type: "VariableDeclarator",
+				id: {
+					type: "Identifier",
+					name: "a"
+				}
+			}]
+		}]
+	}]
+};
+
+describe("TraversalContext", () => {
+	it("should be correct", () => {
+		let context = new TraversalContext(node);
+		expect(context.body[0].body[0].declarations[0].id.name).to.equal("a");
+		expect(context.body[0].body[0].declarations[0].isLet()).to.be.true;
 	});	
 });
 

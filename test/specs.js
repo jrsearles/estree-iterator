@@ -24,7 +24,7 @@ describe("Estree", () => {
 		let ast = acorn.parse(code, {ecmaVersion: 6});
 		
 		iterator.walk(ast, {
-			Program: (node) => expect(node.directives[0]).to.equal("use strict")
+			Program: (node) => expect(node.getDirectives()[0]).to.equal("use strict")
 		});
 	});
 	
@@ -83,7 +83,10 @@ describe("Estree", () => {
 
 		iterator.walk(ast, {
 			// FunctionDeclaration: (node) => expect(node.bindings.length).to.equal(1),
-			BlockStatement: (node) => expect(node.bindings.length).to.equal(2)
+			BlockStatement: (node) => {
+				console.log(node.bindings.length);
+				expect(node.bindings.length).to.equal(2);
+			}
 		});
 	});
 	
@@ -104,4 +107,50 @@ describe("Estree", () => {
 	// 		BlockStatement: (node) => expect(node.isScopable()).to.be.false
 	// 	});
 	// });
+	
+	describe("With step", () => {
+		it("should only iterate over the top level", () => {
+			let code = "var a = 1; function b () { a = 2; }\nb();";
+			let ast = acorn.parse(code);
+			let count = 0;
+			
+			let counter = () => count++;
+			iterator.step(ast, {
+				"Program": counter,
+				"BlockStatement": counter,
+				"VariableDeclarator": counter,
+				"FunctionDeclaration": counter
+			}).next();
+			
+			expect(count).to.equal(1);
+		});
+		
+		it("should allow iteration to resume", () => {
+			let code = "var a = 1; function b () { a = 2; }\nb();";
+			let ast = acorn.parse(code);
+			let count = 0;
+			
+			let counter = () => count++;
+			let stepper = iterator.step(ast, {
+				"Program": function (node, state, w) {
+					count++;
+					
+					for (let i = 0, ln = node.body.length; i < ln; i++) {
+						w(node.body[i], state).next()
+					}
+					// node.body.forEach(child => w(child, state, w).next());
+				},
+				"VariableDeclaration": counter,
+				"ExpressionStatement": counter,
+				"CallExpression": counter
+			});
+			
+			let {done} = stepper.next();
+			while (!done) {
+				({done} = stepper.next());
+			}
+			
+			expect(count).to.be.above(1);
+		});
+	});
 });

@@ -1,6 +1,5 @@
 import {types} from "./types";
 import {interfaces} from "./interfaces";
-import {Binding} from "./binding";
 
 function isNode (obj) {
 	return obj && typeof obj === "object" && typeof obj.type === "string";
@@ -20,50 +19,18 @@ function assignChild (value, context) {
 	return value;
 }
 
-const initers = {};
-initers["Program"] = initers["Function"] = {
-	enter: function () {
-		this.scopeParent = this.blockParent = this;
-		this.bindings = [];
-		this.directives = [];
-	},
+function* getDirectives (body) {
+	if (body.body) {
+		yield* getDirectives(body.body);
+	}
 	
-	exit: function () {
-		let i = 0;
-		let body = this.body.body || this.body;
-		let length = body.length;
-		
+	if (Array.isArray(body)) {	
+		let i = 0, length = body.length;
 		while (i < length && body[i].isDirective()) {
-			this.directives.push(body[i++].expression.value);
+			yield body[i++].expression.value;
 		}
 	}
-};
-
-initers["Block"] = function () {
-	this.blockParent = this;
-	this.bindings = [];
-};
-
-initers["FunctionDeclaration"] = function () {
-	if (this._node.id) {
-		this._parent.scopeParent.bindings.push(new Binding(this, this._node.id));
-	}
-};
-
-initers["VariableDeclarator"] = {
-	exit: function () {
-		let binding = new Binding(this, this._node.id, this._parent._node.kind);
-
-		if (binding.isBlockScope()) {
-			this.blockParent.bindings.push(binding);
-		}
-		else {
-			this.scopeParent.bindings.push(binding);
-		}
-	}
-};
-
-let initKeys = Object.keys(initers);
+}
 
 export class TraversalContext {
 	constructor (node, parent) {
@@ -79,28 +46,30 @@ export class TraversalContext {
 			return;
 		}
 		
-		if (this._parent) {
-			this.scopeParent = this._parent.scopeParent;
-			this.blockParent = this._parent.blockParent;
+		this.bindings = [];
+		
+		let currentScope = this._parent ? this._parent.scopeParent : this;
+		let currentBlock = this._parent ? this._parent.blockParent : this;
+		
+		if (this.isDeclarator()) {
+			currentScope.bindings.push(this);
+			
+			if (this.isBlockScope() && currentScope !== currentBlock) {
+				currentBlock.bindings.push(this);
+			}
 		}
-	
-		initKeys.forEach(key => {
-			if (this.is(key)) {
-				let initer = initers[key].enter || initers[key];
-				if (typeof initer === "function") {
-					initer.call(this)
-				}
-			}
-		});
 		
-		Object.keys(this._node).forEach(key => this[key] = assignChild(this._node[key], this));
+		if (this.isFunction() || this.isProgram()) {
+			this.scopeParent = this.blockParent = this;
+		} else if (this.isBlock()) {
+			this.scopeParent = currentScope;
+			this.blockParent = this;
+		} else {
+			this.scopeParent = currentScope;
+			this.blockParent = currentBlock;
+		}
 		
-		initKeys.forEach(key => {
-			if (initers[key].exit && this.is(key)) {
-				initers[key].exit.call(this);
-			}
-		});
-		
+		Object.keys(this._node).forEach(key => this[key] = assignChild(this._node[key], this));	
 		this._initialized = true;
 	}
 	
@@ -109,7 +78,7 @@ export class TraversalContext {
 			return true;
 		}
 		
-		let key = "is" + type;
+		let key = `is${type}`;
 		if (typeof this[key] === "function") {
 			return this[key]();
 		}
@@ -121,20 +90,44 @@ export class TraversalContext {
 		return this._node[key] != null;
 	}
 	
-	hasBindings () {
-		return this.bindings && this.bindings.length > 0;
+	getDirectives () {
+		if (!this.directives) {
+			this.directives = [];
+			var it = getDirectives(this.body);
+			var done, value;
+			
+			do {
+				({done, value} = it.next());
+				if (!done && value) {
+					this.directives.push(value);
+				}
+			} while(!done);	
+		}
+		
+		return this.directives;
 	}
 };
 
 // add helper methods
 Object.keys(interfaces).forEach(key => {
-	TraversalContext.prototype["is" + key] = typeof interfaces[key] === "function" ? interfaces[key] : function () {
+	TraversalContext.prototype[`is${key}`] = typeof interfaces[key] === "function" ? interfaces[key] : function () {
 		return interfaces[key].indexOf(this.type) >= 0;
 	};
 });
 
 Object.keys(types).forEach(key => {
-	TraversalContext.prototype["is" + key] = function () {
+	TraversalContext.prototype[`is${key}`] = function () {
 		return this.type === key;
 	};
 });
+
+["Var", "Const", "Let"].forEach(key => {
+	const lowerCaseKey = key.toLowerCase();
+	TraversalContext.prototype[`is${key}`] = function () {
+		return this._parent._node.kind === lowerCaseKey;
+	};
+});
+
+TraversalContext.prototype.isBlockScope = function () {
+	return this.isLet() || this.isConst();
+};

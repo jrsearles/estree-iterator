@@ -54,6 +54,19 @@ export function walk (node, visitors, state) {
 	} while (!done);
 }
 
+export function step (node, visitors, state) {
+	let wrappedVisitors = wrapVisitors(visitors, defaultVisitors);
+	let wrappedNode = new TraversalContext(node);
+	
+	function stepper (node, state) {
+		if (typeof wrappedVisitors[node.type] === "function") {
+			return wrappedVisitors[node.type](node, state, stepper);
+		}
+	};
+	
+	return stepper(wrappedNode, state);
+}
+
 export function* iterate (node) {
 	for (let current of walker(defaultVisitors, new TraversalContext(node))) {
 		yield current;
