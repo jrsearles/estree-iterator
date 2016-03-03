@@ -86,8 +86,11 @@ function walker(visitors, node, state, next) {
   }, _marked[0], this);
 }
 
-function walk(node, visitors, state) {
-  var it = walker(visitors, new _traversalContext.TraversalContext(node), state);
+function walk(node, visitors, state, rules) {
+  var r = (0, _visitors.makeRules)(rules);
+  var it = walker(visitors, new _traversalContext.TraversalContext(node, null, function (n) {
+    return r(n, state);
+  }), state);
   var done = false;
   var value = undefined;
 

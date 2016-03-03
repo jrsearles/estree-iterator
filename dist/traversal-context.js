@@ -145,7 +145,10 @@ var proto = TraversalContext.prototype = {
     (0, _keys2.default)(this._node).forEach(function (key) {
       return _this[key] = assignChild(_this._node[key], _this, rules);
     });
-    rules(this);
+
+    if (rules) {
+      rules(this);
+    }
   },
   is: function is(type) {
     if (type === this.type) {
