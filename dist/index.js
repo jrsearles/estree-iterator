@@ -1,293 +1,203 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
-exports.walk = walk;
-exports.iterate = iterate;
-exports.filter = filter;
-
-var _create = require("babel-runtime/core-js/object/create");
-
-var _create2 = _interopRequireDefault(_create);
+exports.extendVisitors = exports.makeRules = undefined;
 
 var _getIterator2 = require("babel-runtime/core-js/get-iterator");
 
 var _getIterator3 = _interopRequireDefault(_getIterator2);
 
-var _keys = require("babel-runtime/core-js/object/keys");
+var _create = require("babel-runtime/core-js/object/create");
 
-var _keys2 = _interopRequireDefault(_keys);
-
-var _assign = require("babel-runtime/core-js/object/assign");
-
-var _assign2 = _interopRequireDefault(_assign);
+var _create2 = _interopRequireDefault(_create);
 
 var _regenerator = require("babel-runtime/regenerator");
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
 
-var _traversalContext = require("./traversal-context");
+exports.walker = walker;
+exports.walk = walk;
+exports.step = step;
+exports.iterate = iterate;
 
-var _walk = require("./walk");
+var _traversalContext = require("./traversal-context");
 
 var _visitors = require("./visitors");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var _marked = [iterate, filter].map(_regeneratorRuntime.mark);
+var _marked = [walker, iterate].map(_regenerator2.default.mark);
 
-function makeVisitor(keys) {
-	return _regenerator2.default.mark(function visitor(node, state, w) {
-		var i, ln, key;
-		return _regenerator2.default.wrap(function visitor$(_context) {
-			while (1) {
-				switch (_context.prev = _context.next) {
-					case 0:
-						_context.next = 2;
-						return node;
+function walker(visitors, node, state, next) {
+  var i, ln, visitor;
+  return _regenerator2.default.wrap(function walker$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          // create a bound walk function to pass to visitors so they can continue walking their child nodes
+          next = next || walker.bind(null, visitors);
 
-					case 2:
-						i = 0, ln = keys.length;
+          if (!Array.isArray(node)) {
+            _context.next = 10;
+            break;
+          }
 
-					case 3:
-						if (!(i < ln)) {
-							_context.next = 10;
-							break;
-						}
+          i = 0, ln = node.length;
 
-						key = keys[i];
+        case 3:
+          if (!(i < ln)) {
+            _context.next = 8;
+            break;
+          }
 
-						if (!node.has(key)) {
-							_context.next = 7;
-							break;
-						}
+          return _context.delegateYield(next(node[i], state, next), "t0", 5);
 
-						return _context.delegateYield(w(node[key], state, w), "t0", 7);
+        case 5:
+          i++;
+          _context.next = 3;
+          break;
 
-					case 7:
-						i++;
-						_context.next = 3;
-						break;
+        case 8:
+          _context.next = 14;
+          break;
 
-					case 10:
-					case "end":
-						return _context.stop();
-				}
-			}
-		}, visitor, this);
-	});
-}
+        case 10:
+          if (!node) {
+            _context.next = 14;
+            break;
+          }
 
-function wrapVisitors(visitors, baseVisitors) {
-	var wrappedVisitors = (0, _assign2.default)({}, baseVisitors);
+          visitor = visitors[node.type];
 
-	(0, _keys2.default)(visitors).forEach(function (key) {
-		if (visitors[key] === false) {
-			wrappedVisitors[key] = false;
-			return;
-		}
+          if (!(typeof visitor === "function")) {
+            _context.next = 14;
+            break;
+          }
 
-		if (Array.isArray(visitors[key])) {
-			wrappedVisitors[key] = makeVisitor(visitors[key]);
-			return;
-		}
+          return _context.delegateYield(visitor(node, state, next), "t1", 14);
 
-		var baseVisitor = baseVisitors[key];
-
-		wrappedVisitors[key] = _regenerator2.default.mark(function _callee() {
-			var result,
-			    _args2 = arguments;
-			return _regenerator2.default.wrap(function _callee$(_context2) {
-				while (1) {
-					switch (_context2.prev = _context2.next) {
-						case 0:
-							_context2.next = 2;
-							return visitors[key].apply(visitors, _args2);
-
-						case 2:
-							result = _context2.sent;
-
-							if (!(result !== false && baseVisitor)) {
-								_context2.next = 5;
-								break;
-							}
-
-							return _context2.delegateYield(baseVisitor.apply(undefined, _args2), "t0", 5);
-
-						case 5:
-						case "end":
-							return _context2.stop();
-					}
-				}
-			}, _callee, this);
-		});
-	});
-
-	return wrappedVisitors;
+        case 14:
+        case "end":
+          return _context.stop();
+      }
+    }
+  }, _marked[0], this);
 }
 
 function walk(node, visitors, state) {
-	var wrappedVisitors = wrapVisitors(visitors, _visitors.defaultVisitors);
-	var it = (0, _walk.walk)(wrappedVisitors, new _traversalContext.TraversalContext(node), state);
-	var done = false;
-	var value = undefined;
+  var it = walker(visitors, new _traversalContext.TraversalContext(node), state);
+  var done = false;
+  var value = undefined;
 
-	do {
-		var _it$next = it.next(value);
+  do {
+    var _it$next = it.next(value);
 
-		done = _it$next.done;
-		value = _it$next.value;
-	} while (!done);
+    done = _it$next.done;
+    value = _it$next.value;
+  } while (!done);
 }
 
-function iterate(node) {
-	var _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, current;
+function step(root, visitors, state, rules) {
+  var r = (0, _visitors.makeRules)(rules);
+  var node = new _traversalContext.TraversalContext(root, null, function (n) {
+    return r(n, state);
+  });
 
-	return regeneratorRuntime.wrap(function iterate$(_context3) {
-		while (1) switch (_context3.prev = _context3.next) {
-			case 0:
-				_iteratorNormalCompletion = true;
-				_didIteratorError = false;
-				_iteratorError = undefined;
-				_context3.prev = 3;
-				_iterator = (0, _getIterator3.default)((0, _walk.walk)(_visitors.defaultVisitors, new _traversalContext.TraversalContext(node)));
+  function next(current, arg) {
+    if (typeof visitors[current.type] === "function") {
+      return visitors[current.type](current, arg, next);
+    }
+  };
 
-			case 5:
-				if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-					_context3.next = 12;
-					break;
-				}
-
-				current = _step.value;
-				_context3.next = 9;
-				return current;
-
-			case 9:
-				_iteratorNormalCompletion = true;
-				_context3.next = 5;
-				break;
-
-			case 12:
-				_context3.next = 18;
-				break;
-
-			case 14:
-				_context3.prev = 14;
-				_context3.t0 = _context3["catch"](3);
-				_didIteratorError = true;
-				_iteratorError = _context3.t0;
-
-			case 18:
-				_context3.prev = 18;
-				_context3.prev = 19;
-
-				if (!_iteratorNormalCompletion && _iterator.return) {
-					_iterator.return();
-				}
-
-			case 21:
-				_context3.prev = 21;
-
-				if (!_didIteratorError) {
-					_context3.next = 24;
-					break;
-				}
-
-				throw _iteratorError;
-
-			case 24:
-				return _context3.finish(21);
-
-			case 25:
-				return _context3.finish(18);
-
-			case 26:
-			case "end":
-				return _context3.stop();
-		}
-	}, _marked[0], this, [[3, 14, 18, 26], [19,, 21, 25]]);
+  return next(node, state);
 }
 
-function filter(node, filters) {
-	var hash, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, current;
+function iterate(node, filters) {
+  var hash, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, current;
 
-	return regeneratorRuntime.wrap(function filter$(_context4) {
-		while (1) switch (_context4.prev = _context4.next) {
-			case 0:
-				hash = undefined;
+  return _regenerator2.default.wrap(function iterate$(_context2) {
+    while (1) {
+      switch (_context2.prev = _context2.next) {
+        case 0:
+          hash = undefined;
 
-				if (filters && Array.isArray(filters)) {
-					hash = (0, _create2.default)(null);
-					filters.forEach(function (type) {
-						return hash[type] = true;
-					});
-				}
+          if (filters && Array.isArray(filters)) {
+            hash = (0, _create2.default)(null);
+            filters.forEach(function (type) {
+              return hash[type] = true;
+            });
+          }
 
-				_iteratorNormalCompletion2 = true;
-				_didIteratorError2 = false;
-				_iteratorError2 = undefined;
-				_context4.prev = 5;
-				_iterator2 = (0, _getIterator3.default)((0, _walk.walk)(_visitors.defaultVisitors, new _traversalContext.TraversalContext(node)));
+          _iteratorNormalCompletion = true;
+          _didIteratorError = false;
+          _iteratorError = undefined;
+          _context2.prev = 5;
+          _iterator = (0, _getIterator3.default)(walker(_visitors.defaultVisitors, new _traversalContext.TraversalContext(node)));
 
-			case 7:
-				if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-					_context4.next = 15;
-					break;
-				}
+        case 7:
+          if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+            _context2.next = 15;
+            break;
+          }
 
-				current = _step2.value;
+          current = _step.value;
 
-				if (!(!hash || hash[current.type])) {
-					_context4.next = 12;
-					break;
-				}
+          if (!(!hash || hash[current.type])) {
+            _context2.next = 12;
+            break;
+          }
 
-				_context4.next = 12;
-				return current;
+          _context2.next = 12;
+          return current;
 
-			case 12:
-				_iteratorNormalCompletion2 = true;
-				_context4.next = 7;
-				break;
+        case 12:
+          _iteratorNormalCompletion = true;
+          _context2.next = 7;
+          break;
 
-			case 15:
-				_context4.next = 21;
-				break;
+        case 15:
+          _context2.next = 21;
+          break;
 
-			case 17:
-				_context4.prev = 17;
-				_context4.t0 = _context4["catch"](5);
-				_didIteratorError2 = true;
-				_iteratorError2 = _context4.t0;
+        case 17:
+          _context2.prev = 17;
+          _context2.t0 = _context2["catch"](5);
+          _didIteratorError = true;
+          _iteratorError = _context2.t0;
 
-			case 21:
-				_context4.prev = 21;
-				_context4.prev = 22;
+        case 21:
+          _context2.prev = 21;
+          _context2.prev = 22;
 
-				if (!_iteratorNormalCompletion2 && _iterator2.return) {
-					_iterator2.return();
-				}
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
 
-			case 24:
-				_context4.prev = 24;
+        case 24:
+          _context2.prev = 24;
 
-				if (!_didIteratorError2) {
-					_context4.next = 27;
-					break;
-				}
+          if (!_didIteratorError) {
+            _context2.next = 27;
+            break;
+          }
 
-				throw _iteratorError2;
+          throw _iteratorError;
 
-			case 27:
-				return _context4.finish(24);
+        case 27:
+          return _context2.finish(24);
 
-			case 28:
-				return _context4.finish(21);
+        case 28:
+          return _context2.finish(21);
 
-			case 29:
-			case "end":
-				return _context4.stop();
-		}
-	}, _marked[1], this, [[5, 17, 21, 29], [22,, 24, 28]]);
+        case 29:
+        case "end":
+          return _context2.stop();
+      }
+    }
+  }, _marked[1], this, [[5, 17, 21, 29], [22,, 24, 28]]);
 }
+
+exports.makeRules = _visitors.makeRules;
+exports.extendVisitors = _visitors.extendVisitors;

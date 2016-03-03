@@ -1,6 +1,6 @@
-import * as iterator from "../index";
+import * as esi from "../index";
 import * as acorn from "acorn";
-import {expect} from "chai";
+import { expect } from "chai";
 
 describe("Estree", () => {
 	it("should indicates blocks are blocks", () => {
@@ -9,12 +9,14 @@ describe("Estree", () => {
 			let empty = "";
 		}`;
 		
-		let ast = acorn.parse(code, {ecmaVersion: 6});
 		let count = 0;
 		
-		iterator.walk(ast, {
-			BlockStatement: (node) => { expect(node.isBlock()).to.be.true; count++; }
-		});
+		let ast = acorn.parse(code, {ecmaVersion: 6});
+    let visitors = esi.extendVisitors({
+      BlockStatement: (node) => { expect(node.isBlock()).to.be.true; count++; }
+    });
+    
+		esi.walk(ast, visitors);
 		
 		expect(count).to.equal(1);
 	});
@@ -23,20 +25,21 @@ describe("Estree", () => {
 		let code = "'use strict';";
 		let ast = acorn.parse(code, {ecmaVersion: 6});
 		
-		iterator.walk(ast, {
+		esi.walk(ast, esi.extendVisitors({
 			Program: (node) => expect(node.getDirectives()[0]).to.equal("use strict")
-		});
+		}));
 	});
 	
 	it("should set the parent context", () => {
 		let code = "if (true) { doSomething(); }";
 		let ast = acorn.parse(code);
-		
-		iterator.walk(ast, {
-			Program: (node) => expect(node._parent).to.be.undefined,
-			IfStatement: (node) => expect(node._parent.isProgram()).to.be.true,
-			CallExpression: (node) => expect(node._parent.type).to.equal("ExpressionStatement")
+		let visitors = esi.extendVisitors({
+			Program: (node) => expect(node.getParent()).to.be.null,
+			IfStatement: (node) => expect(node.getParent().isProgram()).to.be.true,
+			CallExpression: (node) => expect(node.getParent().type).to.equal("ExpressionStatement")
 		});
+    
+		esi.walk(ast, visitors);
 	});
 	
 	it("should return the bindings for a function", () => {
@@ -44,17 +47,17 @@ describe("Estree", () => {
 		let ast = acorn.parse(code);
 		let outer = true;
 		
-		iterator.walk(ast, {
+		esi.walk(ast, esi.extendVisitors({
 			FunctionDeclaration: (node) => {
 				if (outer) {
-					let bindings = node.bindings;
+					let bindings = node.getBindings();
 					expect(bindings.length).to.equal(3);
 					expect(bindings[0].id.name).to.equal("b");
 					
 					outer = false;
 				}
 			}
-		});
+		}));
 	});
 	
 	it("should return own bindings for function scope", () => {
@@ -62,10 +65,10 @@ describe("Estree", () => {
 		let ast = acorn.parse(code);
 		let outer = true;
 		
-		iterator.walk(ast, {
+		esi.walk(ast, esi.extendVisitors({
 			FunctionDeclaration: (node) => {
 				if (outer) {
-					let bindings = node.bindings;
+					let bindings = node.getBindings();
 					expect(bindings.length).to.equal(3);
 					expect(bindings[0].id.name).to.equal("b");
 					
@@ -74,27 +77,26 @@ describe("Estree", () => {
 			},
 			
 			BlockStatement: (node) => expect(node.bindings.length).to.equal(0)
-		});
-	});
+		}));
+	});1
 		
 	it("should return own bindings for block scope let/const", () => {
 		let code = "var a = 1;\n{\nlet b=2,c=3;\n}";
-		let ast = acorn.parse(code, {ecmaVersion: 6});
+		let ast = acorn.parse(code, { ecmaVersion: 6 });
 
-		iterator.walk(ast, {
-			// FunctionDeclaration: (node) => expect(node.bindings.length).to.equal(1),
+		esi.walk(ast, esi.extendVisitors({
+			FunctionDeclaration: (node) => expect(node.getBindings().length).to.equal(1),
 			BlockStatement: (node) => {
-				console.log(node.bindings.length);
-				expect(node.bindings.length).to.equal(2);
+				expect(node.getBindings().length).to.equal(2);
 			}
-		});
+		}));
 	});
 	
 	// it("should indicate a block with `let` variables are scopable", function () {
 	// 	let code = "{\nlet x = 1;\n}";
 	// 	let ast = acorn.parse(code, {ecmaVersion: 6});
 		
-	// 	iterator.walk(ast, {
+	// 	esi.walk(ast, {
 	// 		BlockStatement: (node) => expect(node.isScopable()).to.be.true
 	// 	});
 	// });
@@ -103,7 +105,7 @@ describe("Estree", () => {
 	// 	let code = "{\nvar x = 1;\n}";
 	// 	let ast = acorn.parse(code);
 		
-	// 	iterator.walk(ast, {
+	// 	esi.walk(ast, {
 	// 		BlockStatement: (node) => expect(node.isScopable()).to.be.false
 	// 	});
 	// });
@@ -115,12 +117,12 @@ describe("Estree", () => {
 			let count = 0;
 			
 			let counter = () => count++;
-			iterator.step(ast, {
+			esi.step(ast, esi.extendVisitors({
 				"Program": counter,
 				"BlockStatement": counter,
 				"VariableDeclarator": counter,
 				"FunctionDeclaration": counter
-			}).next();
+			}));
 			
 			expect(count).to.equal(1);
 		});
@@ -130,25 +132,26 @@ describe("Estree", () => {
 			let ast = acorn.parse(code);
 			let count = 0;
 			
-			let counter = () => count++;
-			let stepper = iterator.step(ast, {
-				"Program": function (node, state, w) {
+			let counter = (node, state, next) => { count++; next(); };
+			esi.step(ast, esi.extendVisitors({
+				"Program": function (node, state, next) {
 					count++;
 					
 					for (let i = 0, ln = node.body.length; i < ln; i++) {
-						w(node.body[i], state).next()
+						next(node.body[i], state);
 					}
 					// node.body.forEach(child => w(child, state, w).next());
 				},
 				"VariableDeclaration": counter,
 				"ExpressionStatement": counter,
 				"CallExpression": counter
-			});
+			}));
 			
-			let {done} = stepper.next();
-			while (!done) {
-				({done} = stepper.next());
-			}
+      
+			// let {done} = stepper.next();
+			// while (!done) {
+			// 	({done} = stepper.next());
+			// }
 			
 			expect(count).to.be.above(1);
 		});
